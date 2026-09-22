@@ -213,14 +213,52 @@ fn fnWhile(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value
 // 4. Layout & Containers
 // ─────────────────────────────────────────────────────────────────────────────
 
-fn fnBox(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+fn makeBox(ctx: *Context, kind: []const u8, args: []const Value, body: ?[]const u8) anyerror!Value {
     _ = ctx;
-    const title = if (args.len > 0) args[0].string else null;
-    const content = if (body) |b| b else if (args.len > 1) args[1].string else "";
+    var title: ?[]const u8 = null;
+    var content: []const u8 = "";
+
+    if (body) |b| {
+        content = b;
+        if (args.len > 0 and args[0] == .string) {
+            title = args[0].string;
+        }
+    } else if (args.len >= 2 and args[0] == .string and args[1] == .string) {
+        title = args[0].string;
+        content = args[1].string;
+    } else if (args.len == 1 and args[0] == .string) {
+        content = args[0].string;
+    }
+
     return Value{ .node = Node{ .box = .{
+        .kind = kind,
         .title = title,
         .content = content,
     } } };
+}
+
+fn fnBox(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+    return makeBox(ctx, "", args, body);
+}
+
+fn fnInfo(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+    return makeBox(ctx, "info", args, body);
+}
+
+fn fnWarning(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+    return makeBox(ctx, "warning", args, body);
+}
+
+fn fnDanger(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+    return makeBox(ctx, "danger", args, body);
+}
+
+fn fnNote(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+    return makeBox(ctx, "note", args, body);
+}
+
+fn fnSuccess(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
+    return makeBox(ctx, "success", args, body);
 }
 
 fn fnRow(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
@@ -592,12 +630,14 @@ const RAW_ENTRIES = [_]StdlibEntry{
     .{ .name = "code", .handler = fnCode },
     .{ .name = "column", .handler = fnColumn },
     .{ .name = "concat", .handler = fnConcat },
+    .{ .name = "danger", .handler = fnDanger },
     .{ .name = "div", .handler = fnDiv },
     .{ .name = "docauthor", .handler = fnDocAuthor },
     .{ .name = "docdate", .handler = fnDocDate },
     .{ .name = "docname", .handler = fnDocName },
     .{ .name = "doctheme", .handler = fnDocTheme },
     .{ .name = "doctype", .handler = fnDocType },
+    .{ .name = "error", .handler = fnDanger },
     .{ .name = "footnote", .handler = fnFootnote },
     .{ .name = "footnotes", .handler = fnFootnotes },
     .{ .name = "foreach", .handler = fnForEach },
@@ -609,6 +649,7 @@ const RAW_ENTRIES = [_]StdlibEntry{
     .{ .name = "ifnot", .handler = fnIfNot },
     .{ .name = "image", .handler = fnImage },
     .{ .name = "include", .handler = fnInclude },
+    .{ .name = "info", .handler = fnInfo },
     .{ .name = "italic", .handler = fnItalic },
     .{ .name = "length", .handler = fnLength },
     .{ .name = "let", .handler = fnLet },
@@ -620,6 +661,7 @@ const RAW_ENTRIES = [_]StdlibEntry{
     .{ .name = "min", .handler = fnMin },
     .{ .name = "mod", .handler = fnMod },
     .{ .name = "mul", .handler = fnMul },
+    .{ .name = "note", .handler = fnNote },
     .{ .name = "pagebreak", .handler = fnPageBreak },
     .{ .name = "quote", .handler = fnQuote },
     .{ .name = "repeat", .handler = fnRepeat },
@@ -627,12 +669,14 @@ const RAW_ENTRIES = [_]StdlibEntry{
     .{ .name = "set", .handler = fnSet },
     .{ .name = "strike", .handler = fnStrike },
     .{ .name = "sub", .handler = fnSub },
+    .{ .name = "success", .handler = fnSuccess },
     .{ .name = "tableofcontents", .handler = fnTableOfContents },
     .{ .name = "text", .handler = fnText },
     .{ .name = "toc", .handler = fnTableOfContents },
     .{ .name = "trim", .handler = fnTrim },
     .{ .name = "upper", .handler = fnUpper },
     .{ .name = "var", .handler = fnLet },
+    .{ .name = "warning", .handler = fnWarning },
     .{ .name = "while", .handler = fnWhile },
 };
 

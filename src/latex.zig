@@ -276,12 +276,50 @@ pub const LaTeXRenderer = struct {
             },
 
             .box => |b| {
-                if (b.title) |t| {
-                    try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}[title={");
-                    try escapeLatex(self.alloc, self.buf, t);
-                    try self.buf.appendSlice(self.alloc, "}]\n");
+                if (std.mem.eql(u8, b.kind, "info") or std.mem.eql(u8, b.kind, "note")) {
+                    try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black");
+                    if (b.title) |t| {
+                        try self.buf.appendSlice(self.alloc, ",title={");
+                        try escapeLatex(self.alloc, self.buf, t);
+                        try self.buf.appendSlice(self.alloc, "}]\n");
+                    } else {
+                        try self.buf.appendSlice(self.alloc, "]\n");
+                    }
+                } else if (std.mem.eql(u8, b.kind, "warning")) {
+                    try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}[colback=yellow!10!white,colframe=orange!85!black");
+                    if (b.title) |t| {
+                        try self.buf.appendSlice(self.alloc, ",title={");
+                        try escapeLatex(self.alloc, self.buf, t);
+                        try self.buf.appendSlice(self.alloc, "}]\n");
+                    } else {
+                        try self.buf.appendSlice(self.alloc, "]\n");
+                    }
+                } else if (std.mem.eql(u8, b.kind, "danger") or std.mem.eql(u8, b.kind, "error")) {
+                    try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black");
+                    if (b.title) |t| {
+                        try self.buf.appendSlice(self.alloc, ",title={");
+                        try escapeLatex(self.alloc, self.buf, t);
+                        try self.buf.appendSlice(self.alloc, "}]\n");
+                    } else {
+                        try self.buf.appendSlice(self.alloc, "]\n");
+                    }
+                } else if (std.mem.eql(u8, b.kind, "success")) {
+                    try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black");
+                    if (b.title) |t| {
+                        try self.buf.appendSlice(self.alloc, ",title={");
+                        try escapeLatex(self.alloc, self.buf, t);
+                        try self.buf.appendSlice(self.alloc, "}]\n");
+                    } else {
+                        try self.buf.appendSlice(self.alloc, "]\n");
+                    }
                 } else {
-                    try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}\n");
+                    if (b.title) |t| {
+                        try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}[title={");
+                        try escapeLatex(self.alloc, self.buf, t);
+                        try self.buf.appendSlice(self.alloc, "}]\n");
+                    } else {
+                        try self.buf.appendSlice(self.alloc, "\\begin{tcolorbox}\n");
+                    }
                 }
                 try escapeLatex(self.alloc, self.buf, b.content);
                 try self.buf.appendSlice(self.alloc, "\n\\end{tcolorbox}\n\n");

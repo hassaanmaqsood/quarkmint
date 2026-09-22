@@ -541,7 +541,13 @@ fn serializeNode(alloc: Allocator, buf: *std.ArrayList(u8), node: Node) !void {
             try buf.appendSlice(alloc, "{\"type\":\"page_break\"}");
         },
         .box => |b| {
-            try buf.appendSlice(alloc, "{\"type\":\"box\",\"title\":");
+            try buf.appendSlice(alloc, "{\"type\":\"box\",");
+            if (b.kind.len > 0) {
+                try buf.appendSlice(alloc, "\"kind\":");
+                try writeJsonString(alloc, buf, b.kind);
+                try buf.append(alloc, ',');
+            }
+            try buf.appendSlice(alloc, "\"title\":");
             if (b.title) |t| try writeJsonString(alloc, buf, t) else try buf.appendSlice(alloc, "null");
             try buf.appendSlice(alloc, ",\"content\":");
             try writeJsonString(alloc, buf, b.content);

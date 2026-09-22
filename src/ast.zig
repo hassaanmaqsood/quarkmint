@@ -143,8 +143,9 @@ pub const FootnoteData = struct {
     content: []const u8,
 };
 
-/// Data carried by a Quarkdown container `.box {title} content`
+/// Data carried by a Quarkdown container `.box {title} content` or `.info`, `.warning`, etc.
 pub const BoxData = struct {
+    kind: []const u8 = "",
     title: ?[]const u8 = null,
     content: []const u8,
 };

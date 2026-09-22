@@ -264,7 +264,11 @@ pub const Renderer = struct {
             },
 
             .box => |b| {
-                const attrs = [_]html.Attr{.{ .name = "class", .value = "qd-box" }};
+                const cls = if (b.kind.len > 0)
+                    try std.fmt.allocPrint(self.alloc, "qd-box qd-box-{s}", .{b.kind})
+                else
+                    "qd-box";
+                const attrs = [_]html.Attr{.{ .name = "class", .value = cls }};
                 try html.openTag(self.alloc, self.buf, "div", &attrs);
                 if (b.title) |t| {
                     try html.openTag(self.alloc, self.buf, "h5", &.{});
