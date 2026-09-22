@@ -106,7 +106,7 @@ fn fnGet(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
 
 fn fnFunction(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Value {
     if (args.len > 0 and body != null) {
-        // First arg is function signature: e.g. "myfunc arg1 arg2"
+        // First arg is function signature: e.g. "myfunc arg1 arg2" or "myfunc"
         var it = std.mem.splitScalar(u8, args[0].string, ' ');
         const name = it.next() orelse return Value{ .none = {} };
 
@@ -115,6 +115,15 @@ fn fnFunction(ctx: *Context, args: []const Value, body: ?[]const u8) anyerror!Va
             const trimmed = std.mem.trim(u8, p, " \t");
             if (trimmed.len > 0) {
                 try params.append(ctx.alloc, trimmed);
+            }
+        }
+
+        if (args.len > 1) {
+            for (args[1..]) |arg| {
+                const trimmed = std.mem.trim(u8, arg.string, " \t");
+                if (trimmed.len > 0) {
+                    try params.append(ctx.alloc, trimmed);
+                }
             }
         }
 

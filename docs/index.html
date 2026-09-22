@@ -160,6 +160,14 @@ Document compiled in sub-millisecond WebAssembly via **Quarkmint**.</textarea>
               </svg>
               <span>Copy</span>
             </button>
+            <button class="btn btn-secondary btn-sm" id="btn-pdf" title="Export or print pixel-perfect A4 PDF">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 9V2h12v7" />
+                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              <span>PDF</span>
+            </button>
             <button class="btn btn-primary btn-sm" id="btn-download" title="Download standalone document">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -175,7 +183,7 @@ Document compiled in sub-millisecond WebAssembly via **Quarkmint**.</textarea>
         <div class="preview-container">
           <!-- 1. Live Rendered Iframe Sandbox -->
           <div class="view-panel active" id="panel-preview">
-            <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"
+            <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts allow-modals"
               title="Rendered Document Preview"></iframe>
           </div>
 

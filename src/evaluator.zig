@@ -64,17 +64,33 @@ fn evaluateNode(ctx: *Context, out: *std.ArrayList(Node), node: Node) !void {
         .rich_block => |rb| {
             var new_children = ast.List(Node).empty;
             for (rb.items) |child| {
-                if (child == .function_call) {
-                    const val = try evalFunctionCall(ctx, child.function_call);
-                    const child_nodes = try valueToNodes(ctx.alloc, val);
-                    for (child_nodes) |cn| {
-                        try new_children.append(ctx.alloc, cn);
-                    }
-                } else if (child == .text) {
-                    const interpolated = try interpolateVariables(ctx, child.text);
-                    try new_children.append(ctx.alloc, Node{ .text = interpolated });
-                } else {
-                    try new_children.append(ctx.alloc, child);
+                switch (child) {
+                    .function_call => |fc| {
+                        const val = try evalFunctionCall(ctx, fc);
+                        const child_nodes = try valueToNodes(ctx.alloc, val);
+                        for (child_nodes) |cn| {
+                            try new_children.append(ctx.alloc, cn);
+                        }
+                    },
+                    .text => |t| {
+                        const interpolated = try interpolateVariables(ctx, t);
+                        try new_children.append(ctx.alloc, Node{ .text = interpolated });
+                    },
+                    .strong => |s| {
+                        const interpolated = try interpolateVariables(ctx, s);
+                        try new_children.append(ctx.alloc, Node{ .strong = interpolated });
+                    },
+                    .emphasis => |e| {
+                        const interpolated = try interpolateVariables(ctx, e);
+                        try new_children.append(ctx.alloc, Node{ .emphasis = interpolated });
+                    },
+                    .strikethrough => |st| {
+                        const interpolated = try interpolateVariables(ctx, st);
+                        try new_children.append(ctx.alloc, Node{ .strikethrough = interpolated });
+                    },
+                    else => {
+                        try new_children.append(ctx.alloc, child);
+                    },
                 }
             }
             try out.append(ctx.alloc, Node{ .rich_block = new_children });
@@ -106,25 +122,34 @@ fn evalFunctionCall(ctx: *Context, fc: ast.FunctionCallData) !Value {
         try evaled_args.append(ctx.alloc, Value{ .string = interpolated });
     }
 
-    // 2. Check built-in evaluation primitives (.let, .var, .if, .docname, etc.)
-    if (std.mem.eql(u8, fc.name, "let") or std.mem.eql(u8, fc.name, "var")) {
+    // 2. Check built-in evaluation primitives (.let, .var, .set, .if, .docname, etc.)
+    if (std.mem.eql(u8, fc.name, "let") or std.mem.eql(u8, fc.name, "var") or std.mem.eql(u8, fc.name, "set")) {
+        const is_set = std.mem.eql(u8, fc.name, "set");
         if (evaled_args.items.len >= 2) {
             const var_name = evaled_args.items[0].string;
             const var_val = evaled_args.items[1];
-            try ctx.current_scope.defineVar(ctx.alloc, var_name, var_val);
-        } else if (evaled_args.items.len == 1 and fc.body != null) {
-            const var_name = evaled_args.items[0].string;
-            const body_interp = try interpolateVariables(ctx, fc.body.?);
-            try ctx.current_scope.defineVar(ctx.alloc, var_name, Value{ .string = body_interp });
-        }
-        return Value{ .none = {} };
-    }
-
-    if (std.mem.eql(u8, fc.name, "set")) {
-        if (evaled_args.items.len >= 2) {
-            const var_name = evaled_args.items[0].string;
-            const var_val = evaled_args.items[1];
-            _ = ctx.current_scope.updateVar(var_name, var_val);
+            if (!is_set or !ctx.current_scope.updateVar(var_name, var_val)) {
+                try ctx.current_scope.defineVar(ctx.alloc, var_name, var_val);
+            }
+        } else if (evaled_args.items.len == 1) {
+            if (fc.body != null) {
+                const var_name = evaled_args.items[0].string;
+                const body_interp = try interpolateVariables(ctx, fc.body.?);
+                const var_val = Value{ .string = body_interp };
+                if (!is_set or !ctx.current_scope.updateVar(var_name, var_val)) {
+                    try ctx.current_scope.defineVar(ctx.alloc, var_name, var_val);
+                }
+            } else if (evaled_args.items[0] == .string) {
+                const s = evaled_args.items[0].string;
+                if (std.mem.indexOfAny(u8, s, " \t")) |sp| {
+                    const var_name = std.mem.trim(u8, s[0..sp], " \t");
+                    const var_val_str = std.mem.trim(u8, s[sp + 1 ..], " \t");
+                    const var_val = Value{ .string = var_val_str };
+                    if (!is_set or !ctx.current_scope.updateVar(var_name, var_val)) {
+                        try ctx.current_scope.defineVar(ctx.alloc, var_name, var_val);
+                    }
+                }
+            }
         }
         return Value{ .none = {} };
     }
@@ -198,9 +223,27 @@ fn evalFunctionCall(ctx: *Context, fc: ast.FunctionCallData) !Value {
         _ = try ctx.pushScope();
         defer ctx.popScope();
 
-        for (fn_def.params, 0..) |param_name, idx| {
-            const val = if (idx < evaled_args.items.len) evaled_args.items[idx] else Value{ .none = {} };
-            try ctx.current_scope.defineVar(ctx.alloc, param_name, val);
+        if (fn_def.params.len == 2 and evaled_args.items.len == 1 and evaled_args.items[0] == .string) {
+            const raw = evaled_args.items[0].string;
+            if (std.mem.indexOfScalar(u8, raw, '#')) |hash_pos| {
+                const p0 = std.mem.trim(u8, raw[0..hash_pos], " \t");
+                const p1 = std.mem.trim(u8, raw[hash_pos..], " \t");
+                try ctx.current_scope.defineVar(ctx.alloc, fn_def.params[0], Value{ .string = p0 });
+                try ctx.current_scope.defineVar(ctx.alloc, fn_def.params[1], Value{ .string = p1 });
+            } else if (std.mem.indexOfAny(u8, raw, " \t")) |sp| {
+                const p0 = std.mem.trim(u8, raw[0..sp], " \t");
+                const p1 = std.mem.trim(u8, raw[sp + 1 ..], " \t");
+                try ctx.current_scope.defineVar(ctx.alloc, fn_def.params[0], Value{ .string = p0 });
+                try ctx.current_scope.defineVar(ctx.alloc, fn_def.params[1], Value{ .string = p1 });
+            } else {
+                try ctx.current_scope.defineVar(ctx.alloc, fn_def.params[0], evaled_args.items[0]);
+                try ctx.current_scope.defineVar(ctx.alloc, fn_def.params[1], Value{ .none = {} });
+            }
+        } else {
+            for (fn_def.params, 0..) |param_name, idx| {
+                const val = if (idx < evaled_args.items.len) evaled_args.items[idx] else Value{ .none = {} };
+                try ctx.current_scope.defineVar(ctx.alloc, param_name, val);
+            }
         }
 
         const body_interp = try interpolateVariables(ctx, fn_def.body);
@@ -282,8 +325,13 @@ pub fn valueToNodes(alloc: Allocator, val: Value) ![]Node {
         .node_list => |nl| return nl,
         .string => |s| {
             if (s.len == 0) return &[_]Node{};
+            const trimmed = std.mem.trim(u8, s, " \t\r\n");
             const arr = try alloc.alloc(Node, 1);
-            arr[0] = Node{ .text = s };
+            if (std.mem.startsWith(u8, trimmed, "<") and std.mem.endsWith(u8, trimmed, ">")) {
+                arr[0] = Node{ .html_inline = s };
+            } else {
+                arr[0] = Node{ .text = s };
+            }
             return arr;
         },
         .integer => |i| {

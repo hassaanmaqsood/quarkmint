@@ -420,7 +420,12 @@ pub fn parse(alloc: Allocator, source: []const u8) ParseError!ParseResult {
                 var body_start = fc.args_end;
                 while (body_start < tok.end and (source[body_start] == ' ' or source[body_start] == '\t')) : (body_start += 1) {}
                 const raw_body = std.mem.trim(u8, source[body_start..tok.end], "\r\n \t");
-                const body: ?[]const u8 = if (raw_body.len > 0) raw_body else null;
+                var body: ?[]const u8 = if (raw_body.len > 0) raw_body else null;
+
+                if (body == null and i + 1 < block_tokens.items.len and block_tokens.items[i + 1].kind == .paragraph) {
+                    body = std.mem.trim(u8, block_tokens.items[i + 1].slice(source), "\r\n \t");
+                    i += 1;
+                }
 
                 try nodes.append(alloc, Node{ .function_call = .{
                     .name = name,

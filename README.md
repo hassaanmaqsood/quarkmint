@@ -38,6 +38,7 @@ You can try Quarkmint right in your browser without installing anything:
 - **Instant Preview**: Type on the left, see the rendered document on the right.
 - **Pure Browser Wasm**: Runs 100% locally on your machine. Nothing is sent to a server.
 - **Multiple Views**: Switch between rendered HTML, LaTeX source code, and parsed document structure.
+- **In-Browser PDF Export**: Export or print publication-ready vector A4 PDFs directly from the browser toolbar.
 - **Example Presets**: Includes templates for research papers, math notes, custom macros, and layout grids.
 
 ---
@@ -47,7 +48,7 @@ You can try Quarkmint right in your browser without installing anything:
 - **⚡ Blazing Fast**: Compiles typical documents in less than a millisecond (~94 microseconds).
 - **🌐 Runs Everywhere**: Runs natively on Linux, macOS, and Windows, or in any web browser via a tiny 129 KB WebAssembly file.
 - **📐 Math & Equations**: Full support for inline math (`$E = mc^2$`) and display formulas (`$$\int_0^\infty ...$$`).
-- **📝 HTML & LaTeX Output**: Compiles documents into clean, standalone HTML pages or production-ready LaTeX for PDF generation.
+- **📝 HTML, LaTeX & PDF Output**: Compiles documents into clean standalone HTML pages, production-ready LaTeX, or vector A4 PDFs.
 - **🧩 Custom Variables & Functions**: Define reusable variables (`.set {name value}`) and custom functions (`.function {tag arg} ...`) directly in your document.
 - **🍱 Boxes & Alerts**: Add styled note boxes (`.box {Title}`), warnings (`.warning`), and multi-column layouts (`.row`, `.col`).
 - **📁 File Includes**: Split long documents into multiple files with `.include {path}`.
@@ -83,8 +84,8 @@ Build the CLI binary with Zig:
 git clone https://github.com/hassaanmaqsood/quarkmint.git
 cd quarkmint
 
-# 2. Build the binary
-zig build -Doptimize=ReleaseFast
+# 2. Build the binary (CLI + Wasm)
+zig build
 
 # 3. Check that it works
 ./zig-out/bin/quarkmint --version

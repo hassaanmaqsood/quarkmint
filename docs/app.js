@@ -78,15 +78,15 @@ This document is powered by **$projectName** version **$version**.
 
 .function {metric label val} <div style="display: inline-block; padding: 10px 16px; margin: 4px; border-radius: 8px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3);"><div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">$label</div><div style="font-size: 1.25rem; font-weight: 700; color: #059669;">$val</div></div>
 
-.badge {Zero Heap Allocation #10b981}
-.badge {Freestanding Wasm #2563eb}
-.badge {Turing Complete #7c3aed}
+.badge {Zero Heap Allocation} {#10b981}
+.badge {Freestanding Wasm} {#2563eb}
+.badge {Turing Complete} {#7c3aed}
 
 ### Compiler Telemetry
 
-.metric {Average Latency 94 µs}
-.metric {Throughput 10,600 docs/s}
-.metric {Binary Size 129 KB}
+.metric {Average Latency} {94 µs}
+.metric {Throughput} {10,600 docs/s}
+.metric {Binary Size} {129 KB}
 
 .box {Scoped Evaluation}
 Variables declared inside blocks remain lexically isolated, preventing global state pollution!
@@ -466,6 +466,35 @@ btnDownload.addEventListener('click', () => {
   URL.revokeObjectURL(url);
   showToast(`Downloaded ${filename}`);
 });
+
+const btnPdf = document.getElementById('btn-pdf');
+if (btnPdf) {
+  btnPdf.addEventListener('click', () => {
+    const frame = document.getElementById('preview-frame');
+    try {
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+        showToast('Opening PDF print dialog (select "Save as PDF")...');
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback if iframe sandbox restrictions apply
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(latestCompiledHtml);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => {
+        printWin.print();
+      }, 250);
+      showToast('Opening PDF print window...');
+    } else {
+      showToast('Please allow popups to export PDF');
+    }
+  });
+}
 
 // Bootstrap application
 (async () => {
