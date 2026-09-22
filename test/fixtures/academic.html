@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Untitled Document</title>
+  <style>
+/* ==========================================================================
+   Quarkdown Typesetting Stylesheet — src/assets/quarkdown.css
+   Modern, elegant, high-contrast typography for Quarkdown documents.
+   ========================================================================== */
+
+:root {
+  --qd-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --qd-font-mono: "SF Mono", "Fira Code", "Fira Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --qd-font-serif: "Charter", "Bitstream Charter", "Sitka Text", "Cambria", serif;
+
+  --qd-bg: #ffffff;
+  --qd-fg: #1e293b;
+  --qd-fg-muted: #64748b;
+  --qd-fg-subtle: #94a3b8;
+  --qd-border: #e2e8f0;
+  --qd-border-hover: #cbd5e1;
+
+  --qd-primary: #2563eb;
+  --qd-primary-hover: #1d4ed8;
+  --qd-primary-light: #eff6ff;
+
+  --qd-code-bg: #f8fafc;
+  --qd-code-border: #e2e8f0;
+  --qd-code-fg: #0f172a;
+
+  --qd-quote-bg: #f8fafc;
+  --qd-quote-border: #3b82f6;
+
+  --qd-box-bg: #f8fafc;
+  --qd-box-border: #cbd5e1;
+
+  --qd-box-info-bg: #eff6ff;
+  --qd-box-info-border: #60a5fa;
+  --qd-box-info-fg: #1e40af;
+
+  --qd-box-warning-bg: #fffbeb;
+  --qd-box-warning-border: #f59e0b;
+  --qd-box-warning-fg: #92400e;
+
+  --qd-box-success-bg: #f0fdf4;
+  --qd-box-success-border: #22c55e;
+  --qd-box-success-fg: #166534;
+
+  --qd-box-danger-bg: #fef2f2;
+  --qd-box-danger-border: #ef4444;
+  --qd-box-danger-fg: #991b1b;
+
+  --qd-table-stripe: #f8fafc;
+  --qd-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --qd-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --qd-bg: #0f172a;
+    --qd-fg: #f1f5f9;
+    --qd-fg-muted: #94a3b8;
+    --qd-fg-subtle: #64748b;
+    --qd-border: #334155;
+    --qd-border-hover: #475569;
+
+    --qd-primary: #38bdf8;
+    --qd-primary-hover: #0ea5e9;
+    --qd-primary-light: #082f49;
+
+    --qd-code-bg: #1e293b;
+    --qd-code-border: #334155;
+    --qd-code-fg: #f8fafc;
+
+    --qd-quote-bg: #1e293b;
+    --qd-quote-border: #38bdf8;
+
+    --qd-box-bg: #1e293b;
+    --qd-box-border: #475569;
+
+    --qd-box-info-bg: #082f49;
+    --qd-box-info-border: #38bdf8;
+    --qd-box-info-fg: #e0f2fe;
+
+    --qd-box-warning-bg: #451a03;
+    --qd-box-warning-border: #f59e0b;
+    --qd-box-warning-fg: #fef3c7;
+
+    --qd-box-success-bg: #052e16;
+    --qd-box-success-border: #22c55e;
+    --qd-box-success-fg: #dcfce7;
+
+    --qd-box-danger-bg: #450a0a;
+    --qd-box-danger-border: #ef4444;
+    --qd-box-danger-fg: #fee2e2;
+
+    --qd-table-stripe: #1e293b;
+  }
+}
+
+/* ==========================================================================
+   Base Layout & Document Shell
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body.qd-doc,
+body.quarkdown-document {
+  margin: 0;
+  padding: 0;
+  background-color: var(--qd-bg);
+  color: var(--qd-fg);
+  font-family: var(--qd-font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.qd-doc-container,
+.quarkdown-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+
+/* Document Header (Metadata) */
+.qd-header {
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--qd-border);
+}
+
+.qd-header .qd-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.75rem 0;
+  color: var(--qd-fg);
+}
+
+.qd-header .qd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  color: var(--qd-fg-muted);
+  font-size: 0.95rem;
+}
+
+.qd-header .qd-author,
+.qd-header .qd-date {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ==========================================================================
+   Typography & Inline Formatting
+   ========================================================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--qd-fg);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  scroll-margin-top: 2rem;
+}
+
+h1 { font-size: 2.125rem; }
+h2 { font-size: 1.625rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--qd-border); }
+h3 { font-size: 1.35rem; }
+h4 { font-size: 1.15rem; }
+h5 { font-size: 1.0rem; }
+h6 { font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--qd-fg-muted); }
+
+p {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+}
+
+a {
+  color: var(--qd-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--qd-primary-hover);
+}
+
+strong {
+  font-weight: 600;
+}
+
+em {
+  font-style: italic;
+}
+
+del {
+  color: var(--qd-fg-muted);
+}
+
+mark, .qd-highlight {
+  background-color: #fef08a;
+  color: #1e293b;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  mark, .qd-highlight {
+    background-color: #ca8a04;
+    color: #fef08a;
+  }
+}
+
+/* ==========================================================================
+   Code & Preformatted Text
+   ========================================================================== */
+
+code {
+  font-family: var(--qd-font-mono);
+  font-size: 0.88em;
+  background-color: var(--qd-code-bg);
+  color: var(--qd-code-fg);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--qd-code-border);
+}
+
+pre {
+  background-color: var(--qd-code-bg);
+  border: 1px solid var(--qd-code-border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  box-shadow: var(--qd-shadow-sm);
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  display: block;
+}
+
+/* ==========================================================================
+   Blockquotes & Horizontal Rules
+   ========================================================================== */
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--qd-quote-bg);
+  border-left: 4px solid var(--qd-quote-border);
+  border-radius: 0 6px 6px 0;
+  color: var(--qd-fg);
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+hr {
+  height: 1px;
+  border: none;
+  background-color: var(--qd-border);
+  margin: 2.5rem 0;
+}
+
+/* ==========================================================================
+   Lists & Task Lists
+   ========================================================================== */
+
+ul, ol {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  padding-left: 1.75rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+li input[type="checkbox"] {
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--qd-border);
+}
+
+th {
+  background-color: var(--qd-code-bg);
+  font-weight: 600;
+  color: var(--qd-fg);
+}
+
+tbody tr:nth-child(even) {
+  background-color: var(--qd-table-stripe);
+}
+
+/* ==========================================================================
+   Math Display
+   ========================================================================== */
+
+.math {
+  overflow-x: auto;
+  font-family: var(--qd-font-serif);
+}
+
+div.math {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background-color: var(--qd-quote-bg);
+  border-radius: 6px;
+}
+
+span.math {
+  padding: 0 0.2em;
+}
+
+/* ==========================================================================
+   Quarkdown Containers & Components
+   ========================================================================== */
+
+/* Callout Box */
+.qd-box {
+  background-color: var(--qd-box-bg);
+  border: 1px solid var(--qd-box-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  box-shadow: var(--qd-shadow-sm);
+}
+
+.qd-box h5,
+.qd-box .qd-box-title {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.qd-box.qd-box-note,
+.qd-box.qd-box-info {
+  background-color: var(--qd-box-info-bg);
+  border-color: var(--qd-box-info-border);
+  color: var(--qd-box-info-fg);
+}
+
+.qd-box.qd-box-warning {
+  background-color: var(--qd-box-warning-bg);
+  border-color: var(--qd-box-warning-border);
+  color: var(--qd-box-warning-fg);
+}
+
+.qd-box.qd-box-success {
+  background-color: var(--qd-box-success-bg);
+  border-color: var(--qd-box-success-border);
+  color: var(--qd-box-success-fg);
+}
+
+.qd-box.qd-box-danger,
+.qd-box.qd-box-error {
+  background-color: var(--qd-box-danger-bg);
+  border-color: var(--qd-box-danger-border);
+  color: var(--qd-box-danger-fg);
+}
+
+/* Layout Containers: Row & Column */
+.qd-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  align-items: stretch;
+}
+
+.qd-col,
+.qd-column {
+  flex: 1 1 0;
+  min-width: 250px;
+}
+
+.qd-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+/* Alignment utilities */
+.qd-align-left { text-align: left; }
+.qd-align-center { text-align: center; }
+.qd-align-right { text-align: right; }
+
+/* Table of Contents */
+.toc,
+nav.toc {
+  background-color: var(--qd-quote-bg);
+  border: 1px solid var(--qd-border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 2rem 0;
+}
+
+.toc h4,
+nav.toc h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.toc ul,
+nav.toc ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.toc ul ul,
+nav.toc ul ul {
+  padding-left: 1.25rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.toc a,
+nav.toc a {
+  display: inline-block;
+  padding: 0.15rem 0;
+}
+
+/* Error message styling */
+.qd-error {
+  background-color: var(--qd-box-danger-bg);
+  border: 1px solid var(--qd-box-danger-border);
+  color: var(--qd-box-danger-fg);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  font-family: var(--qd-font-mono);
+  font-size: 0.9rem;
+}
+
+/* Images & Figures */
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  display: block;
+  margin: 1.5rem auto;
+}
+
+figure {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--qd-fg-muted);
+}
+
+/* Footnotes & Citations */
+.qd-footnote-ref, sup.footnote-ref {
+  font-size: 0.75em;
+  line-height: 0;
+  vertical-align: super;
+  padding: 0 0.15em;
+}
+
+.qd-citation, cite.qd-citation {
+  font-style: normal;
+  color: var(--qd-primary);
+  font-weight: 500;
+}
+
+.qd-footnotes, section.footnotes {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--qd-border);
+  font-size: 0.9rem;
+  color: var(--qd-fg-muted);
+}
+
+.qd-footnotes ol, section.footnotes ol {
+  padding-left: 1.5rem;
+}
+
+.qd-bibliography {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--qd-border);
+}
+
+@page {
+  size: A4;
+  margin: 20mm;
+}
+
+@page :first {
+  margin-top: 25mm;
+}
+
+@media print {
+  *, *:before, *:after {
+    background: transparent !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body.qd-doc,
+  body.quarkdown-document {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .qd-doc-container,
+  .quarkdown-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .qd-sidebar,
+  #searchBox,
+  .qd-search-input {
+    display: none !important;
+  }
+
+  .qd-layout {
+    display: block !important;
+  }
+
+  .qd-main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .page-break {
+    page-break-after: always;
+    break-after: page;
+    border-top: none;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  p, blockquote {
+    orphans: 3;
+    widows: 3;
+  }
+
+  a, a:visited {
+    color: #000000 !important;
+    text-decoration: underline !important;
+  }
+
+  pre, blockquote, table, tr, figure, img, .qd-box {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+}
+
+  </style>
+</head>
+<body class="qd-doc qd-article">
+<div class="qd-doc-container">
+  <main class="qd-content">
+<h1 id="academic-article">Academic Article</h1>
+<p>According to recent studies <cite class="qd-citation"><a href="#bib-knuth1984">[knuth1984]</a></cite>, typesetting algorithms require precise mathematical definitions <sup class="qd-footnote-ref"><a href="#fn-1" id="fnref-1">[1]</a></sup>.
+</p>
+<section class="qd-footnotes">
+<hr>
+<ol>
+<li id="fn-1">Donald Knuth developed TeX for mathematical elegance. <a href="#fnref-1">↩</a></li>
+</ol>
+</section>
+<section class="qd-bibliography">
+<h3>References</h3>
+
+</section>
+<ul>
+<li>[knuth1984] Donald E. Knuth. Literate Programming. The Computer Journal, 1984.</li>
+</ul>
+<p>}</p>
+
+  </main>
+</div>
+</body>
+</html>

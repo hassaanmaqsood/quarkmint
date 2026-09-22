@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quarkmint Playground — Sub-Millisecond Markdown Typesetter in Wasm</title>
+  <meta name="description"
+    content="Interactive browser playground for Quarkmint: a Turing-complete, sub-millisecond Markdown typesetting engine compiled with Zig to freestanding WebAssembly.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- Navigation / Header -->
+    <header class="navbar" id="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            <span class="text-gradient">Quarkmint</span>
+            <span class="badge-tag">WASM</span>
+          </div>
+          <span class="brand-subtitle">Freestanding Markdown Typesetter</span>
+        </div>
+      </div>
+
+      <!-- Telemetry Strip -->
+      <div class="telemetry-bar" id="telemetry-bar">
+        <div class="stat-pill" title="Time taken by WebAssembly to compile this document">
+          <span class="stat-dot dot-active"></span>
+          <span class="stat-label">Latency:</span>
+          <span class="stat-value" id="stat-latency">-- µs</span>
+        </div>
+        <div class="stat-pill" title="Calculated throughput based on compilation time">
+          <span class="stat-icon">⚡</span>
+          <span class="stat-label">Throughput:</span>
+          <span class="stat-value" id="stat-throughput">-- docs/s</span>
+        </div>
+        <div class="stat-pill hide-sm" title="Zero libc, zero WASI, 100% self-contained binary">
+          <span class="stat-icon">📦</span>
+          <span class="stat-label">Binary:</span>
+          <span class="stat-value">129 KB</span>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="nav-actions">
+        <label for="preset-select" class="sr-only">Preset Samples</label>
+        <select id="preset-select" class="select-dropdown" title="Load an example document">
+          <option value="academic">📝 Academic Research Paper</option>
+          <option value="functions">⚙️ Programmable Macros & Functions</option>
+          <option value="math">📐 Mathematics & LaTeX</option>
+          <option value="layout">🍱 Bento Layout & Admonitions</option>
+          <option value="minimal">🌱 Minimal Quickstart</option>
+        </select>
+
+        <a href="https://github.com/hassaanmaqsood/quarkmint" target="_blank" rel="noopener noreferrer"
+          class="btn btn-github" id="btn-github">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path
+              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace" id="main-workspace">
+      <!-- Editor Column (Left) -->
+      <section class="pane editor-pane" id="editor-section">
+        <div class="pane-header">
+          <div class="pane-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            <span>Document Editor</span>
+          </div>
+          <div class="pane-actions">
+            <span class="meta-count" id="editor-stats">0 words</span>
+            <button class="btn btn-ghost btn-xs" id="btn-format" title="Clear / Reset document">Reset</button>
+          </div>
+        </div>
+
+        <div class="editor-container">
+          <textarea id="markdown-input" spellcheck="false" placeholder="Write Quarkmint markdown here...">.docname {Quantum Coherence in 2D Superconducting Lattices}
+.docauthor {Dr. Hassaan Maqsood, Quantum Nanoelectronics Laboratory}
+.docdate {2026-09-23}
+.doctype {paper}
+
+.abstract {
+This paper investigates non-equilibrium quasiparticle dynamics in engineered two-dimensional superconducting circuits. Using low-temperature spectroscopy, we demonstrate sub-microsecond state transitions with coherence times exceeding $T_2^* > 85\,\mu\text{s}$.
+}
+
+# 1. Introduction
+
+Superconducting qubits have emerged as a premier architecture for scalable quantum processors. The Hamiltonian governing a transmon coupled to an LC transmission line is modeled as:
+
+$$
+\hat{H} = 4E_C(\hat{n} - n_g)^2 - E_J \cos\hat{\varphi} + \hbar\omega_r\left(\hat{a}^\dagger\hat{a} + \frac{1}{2}\right)
+$$
+
+Where $E_C$ represents the charging energy and $E_J$ is the Josephson tunneling energy.
+
+.box {Theorem 1 (Coherence Bound)}
+For any non-Markovian dissipative bath coupled via operator $\hat{A}$, the decoherence rate $\Gamma_2$ satisfies:
+$$\Gamma_2 = \frac{1}{2T_1} + \frac{1}{T_\phi} \ge \frac{1}{2T_1}$$
+where $T_1$ is the relaxation time and $T_\phi$ is the pure dephasing time.
+
+# 2. Experimental Observations
+
+- [x] Resonator frequency calibrated at $f_r = 6.425\,\text{GHz}$
+- [x] Qubit transition frequency verified at $f_{01} = 4.812\,\text{GHz}$
+- [ ] Multi-qubit parity readout optimization
+
+Document compiled in sub-millisecond WebAssembly via **Quarkmint**.</textarea>
+        </div>
+      </section>
+
+      <!-- Preview Column (Right) -->
+      <section class="pane preview-pane" id="preview-section">
+        <div class="pane-header">
+          <!-- View Mode Tabs -->
+          <div class="tabs" role="tablist">
+            <button class="tab-btn active" role="tab" id="tab-html" data-tab="preview">
+              <span>Preview</span>
+            </button>
+            <button class="tab-btn" role="tab" id="tab-latex" data-tab="latex">
+              <span>LaTeX</span>
+            </button>
+            <button class="tab-btn" role="tab" id="tab-ast" data-tab="ast">
+              <span>AST Tree</span>
+            </button>
+            <button class="tab-btn" role="tab" id="tab-raw" data-tab="raw">
+              <span>Raw HTML</span>
+            </button>
+          </div>
+
+          <!-- Export & Copy Actions -->
+          <div class="pane-actions">
+            <button class="btn btn-secondary btn-sm" id="btn-copy" title="Copy active view content">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+              </svg>
+              <span>Copy</span>
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-download" title="Download standalone document">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab Views -->
+        <div class="preview-container">
+          <!-- 1. Live Rendered Iframe Sandbox -->
+          <div class="view-panel active" id="panel-preview">
+            <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"
+              title="Rendered Document Preview"></iframe>
+          </div>
+
+          <!-- 2. LaTeX Output -->
+          <div class="view-panel" id="panel-latex">
+            <pre><code id="latex-output" class="language-latex"></code></pre>
+          </div>
+
+          <!-- 3. AST Inspector -->
+          <div class="view-panel" id="panel-ast">
+            <pre><code id="ast-output" class="language-json"></code></pre>
+          </div>
+
+          <!-- 4. Raw HTML -->
+          <div class="view-panel" id="panel-raw">
+            <pre><code id="raw-output" class="language-html"></code></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Status / Credit -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>Powered by <strong>Quarkmint Engine</strong></span>
+        <span class="sep">•</span>
+        <span>Compiled with <strong>Zig 0.16.x</strong> to <strong>WebAssembly</strong></span>
+        <span class="sep">•</span>
+        <span>Zero dependencies, zero libc</span>
+      </div>
+      <div class="footer-right">
+        <span>Crafted by <a href="https://github.com/hassaanmaqsood" target="_blank"
+            rel="noopener noreferrer">@hassaanmaqsood</a></span>
+        <span class="sep">•</span>
+        <span class="tribute">Inspired by <a href="https://github.com/iamgio/quarkdown" target="_blank"
+            rel="noopener noreferrer">Quarkdown</a></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+# Layout Showcase
+
+.row {
+  .column {
+    .box {Left Box} Left side content.
+  }
+  .column {
+    .box {Right Box} Right side content.
+  }
+}
+
+.align {center} {
+  Centered Text Block
+}

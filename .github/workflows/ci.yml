@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    name: Build & Verify (Zig + WebAssembly + Node)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Zig 0.16.0
+        run: |
+          curl -sSL https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz | sudo tar -xJ -C /usr/local
+          echo "/usr/local/zig-x86_64-linux-0.16.0" >> $GITHUB_PATH
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify Zig installation
+        run: zig version
+
+      - name: Run native unit test suite (37 modules, leak checked)
+        run: zig build test
+
+      - name: Build WebAssembly library & native CLI
+        run: zig build -Doptimize=ReleaseSmall
+
+      - name: Run golden test suite & throughput benchmark
+        run: node test/golden.js
+
+      - name: Run Node integration test
+        run: node main.js
+
+      - name: Verify native CLI binary
+        run: |
+          ./zig-out/bin/quarkmint -v
+          ./zig-out/bin/quarkmint test/fixtures/hello.qmd -o /tmp/hello.html
+          head -n 20 /tmp/hello.html

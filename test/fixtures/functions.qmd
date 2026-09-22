@@ -1,0 +1,12 @@
+.let {title} {My Document}
+.let {show_extra} {true}
+
+# Title: $title
+
+.if {show_extra} {
+  .box {Notice} This feature is enabled!
+}
+
+.function {greet name} Hello, $name!
+
+.greet {Alice}

@@ -1,0 +1,40 @@
+{
+  "name": "@hassaanmaqsood/quarkmint",
+  "version": "0.2.0",
+  "description": "Sub-millisecond Turing-complete Markdown typesetting engine in freestanding WebAssembly & Zig",
+  "type": "module",
+  "main": "main.js",
+  "module": "main.js",
+  "types": "main.d.ts",
+  "scripts": {
+    "build": "zig build",
+    "build:release": "zig build -Doptimize=ReleaseSmall",
+    "test": "zig build test && node test/golden.js",
+    "test:native": "zig build test",
+    "test:golden": "node test/golden.js",
+    "bench": "node test/golden.js",
+    "serve": "python3 -m http.server 8080 --directory docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hassaanmaqsood/quarkmint.git"
+  },
+  "keywords": [
+    "markdown",
+    "typesetting",
+    "webassembly",
+    "wasm",
+    "zig",
+    "quarkdown",
+    "latex",
+    "math",
+    "parser",
+    "compiler"
+  ],
+  "author": "Hassaan Maqsood",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hassaanmaqsood/quarkmint/issues"
+  },
+  "homepage": "https://hassaanmaqsood.github.io/quarkmint/"
+}

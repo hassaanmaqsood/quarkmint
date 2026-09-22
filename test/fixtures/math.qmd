@@ -1,0 +1,7 @@
+# Mathematical Formulations
+
+Here is the famous mass-energy equation: $E = mc^2$ inline.
+
+.math {\int_{0}^{\infty} e^{-x^2} dx = \frac{\sqrt{\pi}}{2}}
+
+And inline: .mathspan {a^2 + b^2 = c^2} as well.

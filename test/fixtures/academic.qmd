@@ -1,0 +1,9 @@
+# Academic Article
+
+According to recent studies .cite {knuth1984}, typesetting algorithms require precise mathematical definitions .footnote {Donald Knuth developed TeX for mathematical elegance.}.
+
+.footnotes
+
+.bibliography {
+- [knuth1984] Donald E. Knuth. Literate Programming. The Computer Journal, 1984.
+}
