@@ -72,6 +72,8 @@ const SYMBOLS = [_]SymbolMapping{
     .{ .name = "partial", .symbol = "∂" },
     .{ .name = "nabla", .symbol = "∇" },
     .{ .name = "hbar", .symbol = "ħ" },
+    .{ .name = "dagger", .symbol = "†", .is_operator = true },
+    .{ .name = "ddagger", .symbol = "‡", .is_operator = true },
     .{ .name = "pm", .symbol = "±", .is_operator = true },
     .{ .name = "mp", .symbol = "∓", .is_operator = true },
     .{ .name = "times", .symbol = "×", .is_operator = true },
@@ -163,6 +165,31 @@ const SYMBOLS = [_]SymbolMapping{
     .{ .name = "gcd", .symbol = "gcd", .is_operator = true },
     .{ .name = "deg", .symbol = "deg", .is_operator = true },
     .{ .name = "dim", .symbol = "dim", .is_operator = true },
+    .{ .name = "ker", .symbol = "ker", .is_operator = true },
+    .{ .name = "Pr", .symbol = "Pr", .is_operator = true },
+    .{ .name = "arg", .symbol = "arg", .is_operator = true },
+    .{ .name = "hom", .symbol = "hom", .is_operator = true },
+
+    // Dirac Bra-Ket, Norm, & Quantum Operators
+    .{ .name = "langle", .symbol = "⟨", .is_operator = true },
+    .{ .name = "rangle", .symbol = "⟩", .is_operator = true },
+    .{ .name = "mid", .symbol = "∣", .is_operator = true },
+    .{ .name = "parallel", .symbol = "∥", .is_operator = true },
+    .{ .name = "perp", .symbol = "⊥", .is_operator = true },
+    .{ .name = "otimes", .symbol = "⊗", .is_operator = true },
+    .{ .name = "oplus", .symbol = "⊕", .is_operator = true },
+    .{ .name = "odot", .symbol = "⊙", .is_operator = true },
+    .{ .name = "ast", .symbol = "∗", .is_operator = true },
+    .{ .name = "propto", .symbol = "∝", .is_operator = true },
+    .{ .name = "simeq", .symbol = "≃", .is_operator = true },
+    .{ .name = "cong", .symbol = "≅", .is_operator = true },
+    .{ .name = "prime", .symbol = "′", .is_operator = true },
+    .{ .name = "ell", .symbol = "ℓ" },
+    .{ .name = "Re", .symbol = "ℜ", .is_operator = true },
+    .{ .name = "Im", .symbol = "ℑ", .is_operator = true },
+    .{ .name = "aleph", .symbol = "ℵ" },
+    .{ .name = "colon", .symbol = ":", .is_operator = true },
+    .{ .name = "varnothing", .symbol = "∅" },
 
     // Ellipses & Dots
     .{ .name = "dots", .symbol = "…" },
@@ -526,33 +553,42 @@ pub const MathRenderer = struct {
         if (std.mem.eql(u8, cmd, "mathit")) return self.renderStyle("italic");
         if (std.mem.eql(u8, cmd, "mathbb")) return self.renderStyle("double-struck");
         if (std.mem.eql(u8, cmd, "mathcal")) return self.renderStyle("script");
+        if (std.mem.eql(u8, cmd, "mathsf")) return self.renderStyle("sans-serif");
+        if (std.mem.eql(u8, cmd, "mathtt")) return self.renderStyle("monospace");
+        if (std.mem.eql(u8, cmd, "mathfrak")) return self.renderStyle("fraktur");
+
+        // ── Binomial: \binom{n}{k} ──────────────────────────────────────────
+        if (std.mem.eql(u8, cmd, "binom")) {
+            try self.out.appendSlice(self.alloc, "<mrow><mo>(</mo><mfrac linethickness=\"0\"><mrow>");
+            try self.parseScript();
+            try self.out.appendSlice(self.alloc, "</mrow><mrow>");
+            try self.parseScript();
+            try self.out.appendSlice(self.alloc, "</mrow></mfrac><mo>)</mo></mrow>");
+            return;
+        }
 
         // ── Delimiters: \left( ... \right) ───────────────────────────────────
         if (std.mem.eql(u8, cmd, "left")) {
-            self.skipWhitespace();
-            var open_char: []const u8 = "(";
-            if (self.pos < self.src.len) {
-                open_char = self.src[self.pos .. self.pos + 1];
-                self.pos += 1;
+            const open_delim = self.parseDelimiter() orelse "(";
+            try self.out.appendSlice(self.alloc, "<mrow>");
+            if (open_delim.len > 0) {
+                try self.out.appendSlice(self.alloc, "<mo>");
+                try html.escapeText(self.alloc, self.out, open_delim);
+                try self.out.appendSlice(self.alloc, "</mo>");
             }
-            try self.out.appendSlice(self.alloc, "<mrow><mo>");
-            try html.escapeText(self.alloc, self.out, open_char);
-            try self.out.appendSlice(self.alloc, "</mo>");
 
             // Scan until \right
             while (self.pos < self.src.len) {
                 self.skipWhitespace();
                 if (self.pos + 6 <= self.src.len and std.mem.eql(u8, self.src[self.pos .. self.pos + 6], "\\right")) {
                     self.pos += 6;
-                    self.skipWhitespace();
-                    var close_char: []const u8 = ")";
-                    if (self.pos < self.src.len) {
-                        close_char = self.src[self.pos .. self.pos + 1];
-                        self.pos += 1;
+                    const close_delim = self.parseDelimiter() orelse ")";
+                    if (close_delim.len > 0) {
+                        try self.out.appendSlice(self.alloc, "<mo>");
+                        try html.escapeText(self.alloc, self.out, close_delim);
+                        try self.out.appendSlice(self.alloc, "</mo>");
                     }
-                    try self.out.appendSlice(self.alloc, "<mo>");
-                    try html.escapeText(self.alloc, self.out, close_char);
-                    try self.out.appendSlice(self.alloc, "</mo></mrow>");
+                    try self.out.appendSlice(self.alloc, "</mrow>");
                     return;
                 }
                 try self.parseTerm();
@@ -597,8 +633,58 @@ pub const MathRenderer = struct {
         try self.out.appendSlice(self.alloc, "</mi>");
     }
 
+    fn parseDelimiter(self: *MathRenderer) ?[]const u8 {
+        self.skipWhitespace();
+        if (self.pos >= self.src.len) return null;
+
+        if (self.src[self.pos] == '\\') {
+            self.pos += 1;
+            if (self.pos >= self.src.len) return "\\";
+            const c = self.src[self.pos];
+            if (c == '{') {
+                self.pos += 1;
+                return "{";
+            }
+            if (c == '}') {
+                self.pos += 1;
+                return "}";
+            }
+            if (c == '|') {
+                self.pos += 1;
+                return "∥";
+            }
+            if (std.ascii.isAlphabetic(c)) {
+                const start = self.pos;
+                while (self.pos < self.src.len and std.ascii.isAlphabetic(self.src[self.pos])) : (self.pos += 1) {}
+                const name = self.src[start..self.pos];
+                if (std.mem.eql(u8, name, "langle")) return "⟨";
+                if (std.mem.eql(u8, name, "rangle")) return "⟩";
+                if (std.mem.eql(u8, name, "lbrace")) return "{";
+                if (std.mem.eql(u8, name, "rbrace")) return "}";
+                if (std.mem.eql(u8, name, "vert")) return "|";
+                if (std.mem.eql(u8, name, "Vert") or std.mem.eql(u8, name, "parallel")) return "∥";
+                if (std.mem.eql(u8, name, "lfloor")) return "⌊";
+                if (std.mem.eql(u8, name, "rfloor")) return "⌋";
+                if (std.mem.eql(u8, name, "lceil")) return "⌈";
+                if (std.mem.eql(u8, name, "rceil")) return "⌉";
+                return name;
+            }
+            self.pos += 1;
+            return self.src[self.pos - 1 .. self.pos];
+        }
+
+        if (self.src[self.pos] == '.') {
+            self.pos += 1;
+            return "";
+        }
+
+        const s = self.src[self.pos .. self.pos + 1];
+        self.pos += 1;
+        return s;
+    }
+
     fn renderAccent(self: *MathRenderer, accent_sym: []const u8) Allocator.Error!void {
-        try self.out.appendSlice(self.alloc, "<mover><mrow>");
+        try self.out.appendSlice(self.alloc, "<mover accent=\"true\"><mrow>");
         try self.parseScript();
         try self.out.appendSlice(self.alloc, "</mrow><mo>");
         try self.out.appendSlice(self.alloc, accent_sym);
@@ -606,6 +692,46 @@ pub const MathRenderer = struct {
     }
 
     fn renderStyle(self: *MathRenderer, style_name: []const u8) Allocator.Error!void {
+        self.skipWhitespace();
+        if (self.pos < self.src.len and self.src[self.pos] == '{') {
+            self.pos += 1;
+            const start = self.pos;
+            while (self.pos < self.src.len and self.src[self.pos] != '}') : (self.pos += 1) {}
+            const content = self.src[start..self.pos];
+            if (self.pos < self.src.len and self.src[self.pos] == '}') self.pos += 1;
+
+            if (std.mem.eql(u8, style_name, "double-struck") and content.len == 1) {
+                const ch = content[0];
+                const bb_sym: ?[]const u8 = switch (ch) {
+                    'R' => "ℝ",
+                    'C' => "ℂ",
+                    'N' => "ℕ",
+                    'Z' => "ℤ",
+                    'Q' => "ℚ",
+                    'P' => "ℙ",
+                    'H' => "ℍ",
+                    'E' => "𝔼",
+                    'F' => "𝔽",
+                    '1' => "𝟙",
+                    else => null,
+                };
+                if (bb_sym) |sym| {
+                    try self.out.appendSlice(self.alloc, "<mi>");
+                    try self.out.appendSlice(self.alloc, sym);
+                    try self.out.appendSlice(self.alloc, "</mi>");
+                    return;
+                }
+            }
+
+            try self.out.appendSlice(self.alloc, "<mstyle mathvariant=\"");
+            try self.out.appendSlice(self.alloc, style_name);
+            try self.out.appendSlice(self.alloc, "\">");
+            var inner_r = MathRenderer{ .alloc = self.alloc, .src = content, .pos = 0, .out = self.out };
+            try inner_r.parseExpression(null);
+            try self.out.appendSlice(self.alloc, "</mstyle>");
+            return;
+        }
+
         try self.out.appendSlice(self.alloc, "<mstyle mathvariant=\"");
         try self.out.appendSlice(self.alloc, style_name);
         try self.out.appendSlice(self.alloc, "\">");
@@ -626,9 +752,19 @@ pub const MathRenderer = struct {
 
         const is_paren = std.mem.eql(u8, env_name, "pmatrix");
         const is_bracket = std.mem.eql(u8, env_name, "bmatrix");
+        const is_brace = std.mem.eql(u8, env_name, "Bmatrix");
+        const is_vbar = std.mem.eql(u8, env_name, "vmatrix");
+        const is_Vbar = std.mem.eql(u8, env_name, "Vmatrix");
+        const is_cases = std.mem.eql(u8, env_name, "cases");
 
-        if (is_paren) try self.out.appendSlice(self.alloc, "<mrow><mo>(</mo>");
-        if (is_bracket) try self.out.appendSlice(self.alloc, "<mrow><mo>[</mo>");
+        const has_wrapper = is_paren or is_bracket or is_brace or is_vbar or is_Vbar or is_cases;
+        if (has_wrapper) try self.out.appendSlice(self.alloc, "<mrow>");
+
+        if (is_paren) try self.out.appendSlice(self.alloc, "<mo>(</mo>");
+        if (is_bracket) try self.out.appendSlice(self.alloc, "<mo>[</mo>");
+        if (is_brace or is_cases) try self.out.appendSlice(self.alloc, "<mo>{</mo>");
+        if (is_vbar) try self.out.appendSlice(self.alloc, "<mo>|</mo>");
+        if (is_Vbar) try self.out.appendSlice(self.alloc, "<mo>∥</mo>");
 
         try self.out.appendSlice(self.alloc, "<mtable><mtr><mtd>");
 
@@ -659,8 +795,13 @@ pub const MathRenderer = struct {
 
         try self.out.appendSlice(self.alloc, "</mtd></mtr></mtable>");
 
-        if (is_paren) try self.out.appendSlice(self.alloc, "<mo>)</mo></mrow>");
-        if (is_bracket) try self.out.appendSlice(self.alloc, "<mo>]</mo></mrow>");
+        if (is_paren) try self.out.appendSlice(self.alloc, "<mo>)</mo>");
+        if (is_bracket) try self.out.appendSlice(self.alloc, "<mo>]</mo>");
+        if (is_brace) try self.out.appendSlice(self.alloc, "<mo>}</mo>");
+        if (is_vbar) try self.out.appendSlice(self.alloc, "<mo>|</mo>");
+        if (is_Vbar) try self.out.appendSlice(self.alloc, "<mo>∥</mo>");
+
+        if (has_wrapper) try self.out.appendSlice(self.alloc, "</mrow>");
     }
 };
 

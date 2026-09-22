@@ -272,7 +272,7 @@ pub const Renderer = struct {
                     try html.closeTag(self.alloc, self.buf, "h5");
                 }
                 try html.openTag(self.alloc, self.buf, "div", &[_]html.Attr{.{ .name = "class", .value = "qd-box-content" }});
-                try html.escapeText(self.alloc, self.buf, b.content);
+                try self.renderContentWithMath(b.content);
                 try html.closeTag(self.alloc, self.buf, "div");
                 try html.closeTag(self.alloc, self.buf, "div");
                 try self.buf.append(self.alloc, '\n');
@@ -282,7 +282,7 @@ pub const Renderer = struct {
                 const cls = if (s.kind == .row) "qd-row" else "qd-col";
                 const attrs = [_]html.Attr{.{ .name = "class", .value = cls }};
                 try html.openTag(self.alloc, self.buf, "div", &attrs);
-                try html.escapeText(self.alloc, self.buf, s.content);
+                try self.renderContentWithMath(s.content);
                 try html.closeTag(self.alloc, self.buf, "div");
                 try self.buf.append(self.alloc, '\n');
             },
@@ -339,6 +339,61 @@ pub const Renderer = struct {
             .right => "text-align: right;",
             .none => null,
         };
+    }
+
+    fn renderContentWithMath(self: *Renderer, content: []const u8) Allocator.Error!void {
+        var i: usize = 0;
+        var text_start: usize = 0;
+
+        while (i < content.len) {
+            if (i + 1 < content.len and content[i] == '$' and content[i + 1] == '$') {
+                if (i > text_start) {
+                    try html.escapeText(self.alloc, self.buf, content[text_start..i]);
+                }
+                const math_start = i + 2;
+                if (std.mem.indexOfPos(u8, content, math_start, "$$")) |end_pos| {
+                    const tex = std.mem.trim(u8, content[math_start..end_pos], " \t\r\n");
+                    const attrs = [_]html.Attr{
+                        .{ .name = "class", .value = "math" },
+                        .{ .name = "data-tex", .value = tex },
+                    };
+                    try html.openTag(self.alloc, self.buf, "div", &attrs);
+                    try math_mod.renderTeXToMathML(self.alloc, self.buf, tex, true);
+                    try html.closeTag(self.alloc, self.buf, "div");
+                    i = end_pos + 2;
+                    text_start = i;
+                    continue;
+                } else {
+                    i += 2;
+                }
+            } else if (content[i] == '$') {
+                if (i > text_start) {
+                    try html.escapeText(self.alloc, self.buf, content[text_start..i]);
+                }
+                const math_start = i + 1;
+                if (std.mem.indexOfPos(u8, content, math_start, "$")) |end_pos| {
+                    const tex = std.mem.trim(u8, content[math_start..end_pos], " \t\r\n");
+                    const attrs = [_]html.Attr{
+                        .{ .name = "class", .value = "math" },
+                        .{ .name = "data-tex", .value = tex },
+                    };
+                    try html.openTag(self.alloc, self.buf, "span", &attrs);
+                    try math_mod.renderTeXToMathML(self.alloc, self.buf, tex, false);
+                    try html.closeTag(self.alloc, self.buf, "span");
+                    i = end_pos + 1;
+                    text_start = i;
+                    continue;
+                } else {
+                    i += 1;
+                }
+            } else {
+                i += 1;
+            }
+        }
+
+        if (text_start < content.len) {
+            try html.escapeText(self.alloc, self.buf, content[text_start..]);
+        }
     }
 };
 

@@ -341,6 +341,7 @@ function renderDocument() {
     // Update Preview Iframe
     if (previewFrame) {
       previewFrame.srcdoc = latestCompiledHtml;
+      setTimeout(renderIframeKatex, 30);
     }
 
     // Update Raw HTML
@@ -494,6 +495,46 @@ if (btnPdf) {
       showToast('Please allow popups to export PDF');
     }
   });
+}
+
+function renderIframeKatex() {
+  if (!previewFrame) return;
+  try {
+    const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+    if (!doc || !doc.body) return;
+
+    // Ensure KaTeX stylesheet is present in the iframe
+    if (!doc.querySelector('link[href*="katex"]')) {
+      const link = doc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css';
+      doc.head.appendChild(link);
+    }
+
+    const doRender = (retries = 30) => {
+      if (typeof window.katex !== 'undefined') {
+        doc.querySelectorAll('.math').forEach((el) => {
+          const tex = el.getAttribute('data-tex');
+          if (tex && !el.dataset.katexRendered) {
+            try {
+              window.katex.render(tex, el, {
+                displayMode: el.tagName === 'DIV',
+                throwOnError: false,
+              });
+              el.dataset.katexRendered = 'true';
+            } catch (_) {}
+          }
+        });
+      } else if (retries > 0) {
+        setTimeout(() => doRender(retries - 1), 50);
+      }
+    };
+    doRender();
+  } catch (_) {}
+}
+
+if (previewFrame) {
+  previewFrame.addEventListener('load', renderIframeKatex);
 }
 
 // Bootstrap application

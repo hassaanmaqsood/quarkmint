@@ -71,11 +71,14 @@ fn stripBackticks(s: []const u8) []const u8 {
 }
 
 fn stripDollars(s: []const u8) []const u8 {
-    var start: usize = 0;
-    while (start < s.len and s[start] == '$') : (start += 1) {}
-    var end: usize = s.len;
-    while (end > start and s[end - 1] == '$') : (end -= 1) {}
-    return s[start..end];
+    var trimmed = std.mem.trim(u8, s, "\r\n \t");
+    while (trimmed.len > 0 and trimmed[0] == '$') {
+        trimmed = trimmed[1..];
+    }
+    while (trimmed.len > 0 and trimmed[trimmed.len - 1] == '$') {
+        trimmed = trimmed[0 .. trimmed.len - 1];
+    }
+    return std.mem.trim(u8, trimmed, "\r\n \t");
 }
 
 fn stripDelims(s: []const u8, count: usize) []const u8 {
@@ -422,9 +425,22 @@ pub fn parse(alloc: Allocator, source: []const u8) ParseError!ParseResult {
                 const raw_body = std.mem.trim(u8, source[body_start..tok.end], "\r\n \t");
                 var body: ?[]const u8 = if (raw_body.len > 0) raw_body else null;
 
-                if (body == null and i + 1 < block_tokens.items.len and block_tokens.items[i + 1].kind == .paragraph) {
-                    body = std.mem.trim(u8, block_tokens.items[i + 1].slice(source), "\r\n \t");
-                    i += 1;
+                if (body == null and i + 1 < block_tokens.items.len) {
+                    const nk0 = block_tokens.items[i + 1].kind;
+                    if (nk0 != .blank and nk0 != .heading and nk0 != .function_call_block and nk0 != .thematic_break and nk0 != .eof) {
+                        const start_pos = block_tokens.items[i + 1].start;
+                        var end_pos = block_tokens.items[i + 1].end;
+                        i += 1;
+                        while (i + 1 < block_tokens.items.len) {
+                            const nk = block_tokens.items[i + 1].kind;
+                            if (nk == .blank or nk == .heading or nk == .function_call_block or nk == .thematic_break or nk == .eof) {
+                                break;
+                            }
+                            end_pos = block_tokens.items[i + 1].end;
+                            i += 1;
+                        }
+                        body = std.mem.trim(u8, source[start_pos..end_pos], "\r\n \t");
+                    }
                 }
 
                 try nodes.append(alloc, Node{ .function_call = .{
