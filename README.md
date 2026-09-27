@@ -115,7 +115,7 @@ You can load and use the WebAssembly engine in JavaScript or Node.js:
 ```javascript
 import { loadQuarkmint } from './main.js';
 
-// Load the engine
+// Load the engine (local or remote)
 const qm = await loadQuarkmint('./zig-out/lib/quarkmint.wasm');
 
 const doc = `
@@ -138,7 +138,49 @@ console.log(latex);
 
 ---
 
-### 3. In the Browser
+### 3. Web Worker (Non-Blocking Background Compilation)
+
+Offload compilation off the main UI thread using `worker.js`:
+
+```javascript
+import { QuarkmintWorkerClient } from './worker.js';
+
+const client = await QuarkmintWorkerClient.create({
+  wasmUrl: 'https://hassaanmaqsood.github.io/quarkmint/quarkmint.wasm',
+  workerUrl: './worker.js'
+});
+
+// Compile asynchronously
+const html = await client.compile('# Hello from Background Thread!\n\n$E = mc^2$');
+const latex = await client.compileLatex('# LaTeX export');
+const ast = await client.parse('# AST structure');
+
+client.terminate();
+```
+
+---
+
+### 4. Zero-Install Remote Streaming (Raw GitHub & CDN)
+
+AI agents and web apps can use Quarkmint **without cloning the repository or installing Zig** by fetching the freestanding Wasm binary and worker directly from GitHub:
+
+| Endpoint | URL |
+| :--- | :--- |
+| **Wasm Binary (CDN)** | `https://hassaanmaqsood.github.io/quarkmint/quarkmint.wasm` |
+| **Wasm Binary (Raw GitHub)** | `https://raw.githubusercontent.com/hassaanmaqsood/qdwasm/main/docs/quarkmint.wasm` |
+| **Web Worker (Raw GitHub)** | `https://raw.githubusercontent.com/hassaanmaqsood/qdwasm/main/worker.js` |
+| **ESM Engine (Raw GitHub)** | `https://raw.githubusercontent.com/hassaanmaqsood/qdwasm/main/main.js` |
+
+#### Zero-dependency Node.js one-liner:
+```javascript
+const res = await fetch('https://raw.githubusercontent.com/hassaanmaqsood/qdwasm/main/docs/quarkmint.wasm');
+const { instance } = await WebAssembly.instantiate(await res.arrayBuffer(), {});
+// instance.exports contains freestanding alloc_buffer, compile, compile_latex!
+```
+
+---
+
+### 5. In the Browser
 
 ```html
 <script type="module">
@@ -152,6 +194,19 @@ console.log(latex);
   attachLivePreview(input, preview, qm, true);
 </script>
 ```
+
+---
+
+### 6. AI Agent Skill
+
+Quarkmint includes a dedicated, comprehensive AI agent skill specification located at [`skills/quarkmint/SKILL.md`](skills/quarkmint/SKILL.md) (and mirrored in [`.agents/skills/quarkmint/SKILL.md`](.agents/skills/quarkmint/SKILL.md)).
+
+AI coding agents can activate this skill to:
+- Instantly typeset math-heavy Markdown documents and LaTeX papers
+- Perform zero-install Wasm compilation directly from GitHub raw content
+- Run parallel background compilations via Web Workers and `worker_threads`
+- Extract JSON AST hierarchies for automated document summarization and structuring
+
 
 ---
 
